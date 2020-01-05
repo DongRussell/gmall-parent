@@ -1,14 +1,13 @@
 package com.atguigu.gmall.admin.pms.controller;
 
 import com.alibaba.dubbo.config.annotation.Reference;
-import com.atguigu.gmall.admin.pms.vo.PmsProductParam;
-import com.atguigu.gmall.admin.pms.vo.PmsProductQueryParam;
 import com.atguigu.gmall.pms.service.ProductService;
+import com.atguigu.gmall.vo.PageInfo;
+import com.atguigu.gmall.vo.product.PmsProductParam;
+import com.atguigu.gmall.vo.product.PmsProductQueryParam;
 import com.atguigu.gmall.to.CommonResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +16,7 @@ import java.util.List;
 /**
  * 商品管理Controller
  */
+@CrossOrigin
 @RestController
 @Api(tags = "PmsProductController", description = "商品管理")
 @RequestMapping("/product")
@@ -48,12 +48,14 @@ public class PmsProductController {
 
     @ApiOperation("查询商品")
     @GetMapping(value = "/list")
-    public Object getList(PmsProductQueryParam productQueryParam,
-                          @RequestParam(value = "pageSize", defaultValue = "5") Integer pageSize,
-                          @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum) {
+    public Object getList(PmsProductQueryParam productQueryParam ){
+//  @RequestParam(value = "pageSize", defaultValue = "5") Long pageSize,
+//  @RequestParam(value = "pageNum", defaultValue = "1") Long pageNum) {
         //TODO 查询商品
-        return new CommonResult().success(null);
+        PageInfo pageInfo = productService.productPageInfo(productQueryParam);
+        return new CommonResult().success(pageInfo);//传输数据啊兄弟
     }
+
 
     @ApiOperation("根据商品名称或货号模糊查询")
     @GetMapping(value = "/simpleList")

@@ -1,6 +1,7 @@
 package com.atguigu.gmall.admin.ums.vo;
 
 import io.swagger.annotations.ApiModelProperty;
+import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotEmpty;
 
 /**

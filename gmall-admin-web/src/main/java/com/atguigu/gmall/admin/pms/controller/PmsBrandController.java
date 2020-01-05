@@ -2,10 +2,11 @@ package com.atguigu.gmall.admin.pms.controller;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.atguigu.gmall.admin.pms.vo.PmsBrandParam;
-import com.atguigu.gmall.pms.entity.Brand;
 import com.atguigu.gmall.pms.service.BrandService;
 import com.atguigu.gmall.to.CommonResult;
 //import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.atguigu.gmall.vo.PageInfo;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.validation.BindingResult;
@@ -17,6 +18,7 @@ import java.util.List;
 /**
  * 品牌功能Controller
  */
+@CrossOrigin
 @RestController
 @Api(tags = "PmsBrandController",description = "商品品牌管理")
 @RequestMapping("/brand")
@@ -71,9 +73,9 @@ public class PmsBrandController {
         CommonResult commonResult = new CommonResult();
 
         //TODO 根据品牌名称分页获取品牌列表
+        PageInfo pageInfo = brandService.brandPageInf(keyword,pageNum,pageSize);
 
-
-        return commonResult;
+        return commonResult.success(pageInfo);
     }
 
     @ApiOperation(value = "根据编号查询品牌信息")

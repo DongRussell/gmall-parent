@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  * </p>
  *
  * @author Brodie
- * @since 2020-01-04
+ * @since 2020-01-05
  */
 public interface FeightTemplateMapper extends BaseMapper<FeightTemplate> {
 

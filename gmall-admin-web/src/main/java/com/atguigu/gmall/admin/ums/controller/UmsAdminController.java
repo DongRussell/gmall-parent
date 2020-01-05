@@ -7,13 +7,10 @@ import com.atguigu.gmall.admin.utils.JwtTokenUtil;
 import com.atguigu.gmall.ums.entity.Admin;
 import com.atguigu.gmall.ums.service.AdminService;
 import com.atguigu.gmall.to.CommonResult;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 

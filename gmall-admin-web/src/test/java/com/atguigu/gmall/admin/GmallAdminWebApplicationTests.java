@@ -9,8 +9,10 @@ class GmallAdminWebApplicationTests {
 
 	@Test
 	void contextLoads() {
-		String s = DigestUtils.md5DigestAsHex("123456".getBytes());
-		System.out.println(s);
+		//String s = DigestUtils.md5DigestAsHex("123456".getBytes());
+		//System.out.println(s);
+
+
 	}
 
 }
