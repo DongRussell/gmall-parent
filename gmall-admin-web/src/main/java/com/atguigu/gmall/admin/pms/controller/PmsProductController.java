@@ -76,9 +76,11 @@ public class PmsProductController {
 
     @ApiOperation("批量上下架")
     @PostMapping(value = "/update/publishStatus")
-    public Object updatePublishStatus(@RequestParam("ids") List<Long> ids,
+    public Object productService(@RequestParam("ids") List<Long> ids,
                                      @RequestParam("publishStatus") Integer publishStatus) {
         //TODO 批量上下架
+
+        productService.updatePublishStatus(ids,publishStatus);
         return new CommonResult().success(null);
     }
 
