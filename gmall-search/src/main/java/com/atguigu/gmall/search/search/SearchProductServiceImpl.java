@@ -1,12 +1,19 @@
 package com.atguigu.gmall.search.search;
 
 
+import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall.constant.EsConstant;
 import com.atguigu.gmall.search.SearchProductService;
+import com.atguigu.gmall.to.es.EsProduct;
 import com.atguigu.gmall.vo.search.SearchParam;
+import com.atguigu.gmall.vo.search.SearchResponseAttrVo;
 import io.searchbox.client.JestClient;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import io.searchbox.core.search.aggregation.ChildrenAggregation;
+import io.searchbox.core.search.aggregation.MetricAggregation;
+import io.searchbox.core.search.aggregation.TermsAggregation;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -19,11 +26,15 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+
 import com.atguigu.gmall.vo.search.SearchResponse;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Brodie
@@ -57,11 +68,77 @@ public class SearchProductServiceImpl implements SearchProductService {
 
     private SearchResponse buildSearchResponse(SearchResult execute) {
         SearchResponse searchResponse = new SearchResponse();
-//        searchResponse.setAttrs();
-//        searchResponse.setBrand();
-//        searchResponse.setCatelog();
-//        searchResponse.setProducts();
-//        searchResponse.setTotal(execute.getTotal());
+        MetricAggregation aggregations = execute.getAggregations();
+
+        //品牌信息
+        TermsAggregation brand_agg = aggregations.getTermsAggregation("brand_agg");
+        List<String> brandNames = new ArrayList<>();
+        brand_agg.getBuckets().forEach((bucket)->{
+            String keyAsString = bucket.getKeyAsString();
+            brandNames.add(keyAsString);
+        });
+        SearchResponseAttrVo attrVo = new SearchResponseAttrVo();
+        attrVo.setName("品牌");
+        attrVo.setValue(brandNames);
+        searchResponse.setBrand(attrVo);
+
+        //分类
+        TermsAggregation category_agg = aggregations.getTermsAggregation("category_agg");
+        List<String> categoryValues = new ArrayList<>();
+        category_agg.getBuckets().forEach((bucket)->{
+            String categoryName = bucket.getKeyAsString();
+            TermsAggregation categoryId_agg = bucket.getTermsAggregation("categoryId_agg");
+            String categoryId = categoryId_agg.getBuckets().get(0).getKeyAsString();
+
+            Map<String,String> map = new HashMap<>();
+            map.put("id",categoryId);
+            map.put("name",categoryName);
+            String cateInfo = JSON.toJSONString(map);
+            categoryValues.add(cateInfo);
+        });
+        SearchResponseAttrVo catelog = new SearchResponseAttrVo();
+        catelog.setName("分类");
+        catelog.setValue(categoryValues);
+        searchResponse.setCatelog(catelog);
+
+        //属性
+        TermsAggregation termsAggregation = aggregations.getChildrenAggregation("attr_agg")
+                .getTermsAggregation("attrName_agg");
+        List<SearchResponseAttrVo> attrList = new ArrayList<>();
+
+        termsAggregation.getBuckets().forEach((bucket)->{
+            SearchResponseAttrVo vo = new SearchResponseAttrVo();
+
+            String attrName = bucket.getKeyAsString();
+            vo.setName(attrName);
+
+            TermsAggregation attrId_agg = bucket.getTermsAggregation("attrId_agg");
+            String attrId = attrId_agg.getBuckets().get(0).getKeyAsString();
+            vo.setProductAttributeId(Long.parseLong(attrId));
+
+
+            TermsAggregation attrValue_agg = bucket.getTermsAggregation("attrValue_agg");
+            List<String> valueList = new ArrayList<>();
+            attrValue_agg.getBuckets().forEach((value)->{
+                valueList.add(value.getKeyAsString());
+            });
+            vo.setValue(valueList);
+            attrList.add(vo);
+        });
+        searchResponse.setAttrs(attrList);
+
+        //商品数据
+        List<SearchResult.Hit<EsProduct,Void>> hits = execute.getHits(EsProduct.class);
+        List<EsProduct> esProducts = new ArrayList<>();
+        hits.forEach((hit)->{
+            EsProduct source = hit.source;
+            String title = hit.highlight.get("skuProductInfos.skuTitle").get(0);
+            source.setName(title);
+            esProducts.add(source);
+        });
+        searchResponse.setProducts(esProducts);
+
+        searchResponse.setTotal(execute.getTotal());
         return searchResponse;
     }
 
@@ -82,8 +159,8 @@ public class SearchProductServiceImpl implements SearchProductService {
             boolQuery.filter(QueryBuilders.termsQuery("productCategoryId",searchParam.getCatelog3()));
         }
         if(searchParam.getBrand()!=null&&searchParam.getBrand().length>0){
-            //按照品牌的条件过滤
-            boolQuery.filter(QueryBuilders.termsQuery("brand.keyword",searchParam.getBrand()));
+            //按照品牌的条件过滤 //有坑的地方brandName
+            boolQuery.filter(QueryBuilders.termsQuery("brandName.keyword",searchParam.getBrand()));
         }
         //1.2.1属性过滤 品牌 分类
         if(searchParam.getProps()!=null&&searchParam.getProps().length>0){
