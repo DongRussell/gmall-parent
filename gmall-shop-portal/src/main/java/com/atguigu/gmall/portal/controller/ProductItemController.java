@@ -1,17 +1,18 @@
 package com.atguigu.gmall.portal.controller;
 
+
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.atguigu.gmall.pms.service.ProductService;
 import com.atguigu.gmall.to.CommonResult;
 import com.atguigu.gmall.to.es.EsProduct;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * @author Brodie
- * @date 2020/1/11 - 20:54
- */
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @RestController
 public class ProductItemController {
@@ -19,12 +20,32 @@ public class ProductItemController {
     @Reference
     ProductService productService;
 
+    @Qualifier("mainThreadPoolExecutor")
+    @Autowired
+    ThreadPoolExecutor threadPoolExecutor;
+
+    @Qualifier("otherThreadPoolExecutor")
+    @Autowired
+    ThreadPoolExecutor otherThreadPoolExecutor;
+
+    /**
+     * 数据库（商品的基本信息表、商品的属性表、商品的促销表）和  es(info/attr/sale)
+     *
+     * 查加缓存
+     * 1、第一次查。肯定长。
+     * @return
+     */
     public EsProduct productInfo2(Long id){
-        //1、第一次查。肯定长。
+
+
+        CompletableFuture.supplyAsync(()->{
+            return "";
+        },threadPoolExecutor).whenComplete((r,e)->{
+            System.out.println("处理结果"+r);
+            System.out.println("处理异常"+e);
+        });
         //1、商品基本数据（名字介绍等） 100ms   异步
-        new Thread(()->{
-            System.out.println("查基本信息");
-        }).start();
+
 
         //2、商品的属性数据  300ms
         new Thread(()->{
@@ -44,13 +65,20 @@ public class ProductItemController {
             System.out.println("查增值信息");
         }).start();
 
-        //8s估计就不看了 可以开启异步化查询
-        //1缓存
-        //2异步
+        //otherThreadPoolExecutor.submit()
+
+        //8s  2.5s； 需要速度快。 开启异步化 最多1s，取决最长的服务调用。
+        //高并发系统的优化
+        //1、加缓存
+        //2、开异步
         return null;
     }
 
-
+    /**
+     * 商品的详情
+     * @param id
+     * @return
+     */
     @GetMapping("/item/{id}.html")
     public CommonResult productInfo(@PathVariable("id") Long id){
 
